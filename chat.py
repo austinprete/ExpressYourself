@@ -116,6 +116,21 @@ class MessageNewHandler(BaseHandler):
             self.write(message)
         global_message_buffer.new_messages([message])
 
+    def translateMessage(message):
+        if (self.current_user["first_name"] == "Austin"):
+            language = "fr"
+        elif (self.current_user["first_name"] == "Tyler"):
+            language = "es"
+        elif (self.current_user["first_name"] == "Janice"):
+            language = "sv"
+        translations = service.translations().list(
+            q=message['body'], 
+            target=language,
+        ).execute()
+        translatedText = ""
+        for translation in translations['translations']:
+            translatedText = translation['translatedText']
+        message['body'] = translatedText
 
 class MessageUpdatesHandler(BaseHandler):
     @tornado.web.authenticated
