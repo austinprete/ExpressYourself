@@ -21,11 +21,12 @@ import tornado.ioloop
 import tornado.web
 import os.path
 import uuid
+from os import environ
 
 from tornado import gen
 from tornado.options import define, options, parse_command_line
 
-define("port", default=5000, help="run on the given port", type=int)
+define("port", default=int(os.environ.get('PORT', 5000)), help="run on the given port", type=int)
 
 
 class MessageBuffer(object):
