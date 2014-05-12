@@ -25,8 +25,12 @@ from os import environ
 
 from tornado import gen
 from tornado.options import define, options, parse_command_line
+from apiclient.discovery import build
 
 define("port", default=int(os.environ.get('PORT', 5000)), help="run on the given port", type=int)
+
+service = build('translate', 'v2',
+                    developerKey='AIzaSyCny1Zg-hDEq3HR6GZrm0BntO_nmU6NBPo')
 
 
 class MessageBuffer(object):
@@ -69,7 +73,7 @@ global_message_buffer = MessageBuffer()
 
 class BaseHandler(tornado.web.RequestHandler):
     def get_current_user(self):
-        user_json = self.get_secure_cookie("chatdemo_user")
+        user_json = self.get_secure_cookie("chat_user")
         if not user_json: return None
         return tornado.escape.json_decode(user_json)
 
@@ -83,10 +87,14 @@ class MainHandler(BaseHandler):
 class MessageNewHandler(BaseHandler):
     @tornado.web.authenticated
     def post(self):
+        translations = service.translations().list(q=self.get_argument("body"), target="fr").execute()
+        translatedText = ""
+        for translation in translations['translations']:
+            translatedText = translation['translatedText']
         message = {
             "id": str(uuid.uuid4()),
             "from": self.current_user["first_name"],
-            "body": self.get_argument("body"),
+            "body": translatedText,
         }
         # to_basestring is necessary for Python 3's json encoder,
         # which doesn't accept byte strings.
@@ -122,7 +130,7 @@ class AuthLoginHandler(BaseHandler, tornado.auth.GoogleMixin):
     def get(self):
         if self.get_argument("openid.mode", None):
             user = yield self.get_authenticated_user()
-            self.set_secure_cookie("chatdemo_user",
+            self.set_secure_cookie("chat_user",
                                    tornado.escape.json_encode(user))
             self.redirect("/")
             return
