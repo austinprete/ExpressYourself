@@ -96,6 +96,8 @@ class MessageNewHandler(BaseHandler):
             language = "fr"
         elif (self.current_user["first_name"] == "Tyler"):
             language = "es"
+        elif (self.current_user["first_name"] == "Janice"):
+            language = "sv"
         translations = service.translations().list(
             q=message['body'], 
             target=language,
