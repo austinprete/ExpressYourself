@@ -87,22 +87,23 @@ class MainHandler(BaseHandler):
 class MessageNewHandler(BaseHandler):
     @tornado.web.authenticated
     def post(self):
+        message = {
+            "id": str(uuid.uuid4()),
+            "from": self.current_user["first_name"],
+            "body": self.get_argument("body"),
+        }
         if (self.current_user["first_name"] == "Austin"):
             language = "fr"
         elif (self.current_user["first_name"] == "Tyler"):
             language = "es"
         translations = service.translations().list(
-            q=self.get_argument("body"), 
+            q=message['body'], 
             target=language,
         ).execute()
         translatedText = ""
         for translation in translations['translations']:
             translatedText = translation['translatedText']
-        message = {
-            "id": str(uuid.uuid4()),
-            "from": self.current_user["first_name"],
-            "body": translatedText,
-        }
+        message['body'] = translatedText
         # to_basestring is necessary for Python 3's json encoder,
         # which doesn't accept byte strings.
         message["html"] = tornado.escape.to_basestring(
