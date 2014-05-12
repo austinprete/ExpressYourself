@@ -89,7 +89,7 @@ class MessageNewHandler(BaseHandler):
     def post(self):
         if (self.current_user["first_name"] == "Austin"):
             language = "fr"
-        else if (self.current_user["first_name"] == "Tyler"):
+        elif (self.current_user["first_name"] == "Tyler"):
             language = "es"
         translations = service.translations().list(
             q=self.get_argument("body"), 
