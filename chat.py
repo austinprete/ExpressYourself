@@ -87,7 +87,14 @@ class MainHandler(BaseHandler):
 class MessageNewHandler(BaseHandler):
     @tornado.web.authenticated
     def post(self):
-        translations = service.translations().list(q=self.get_argument("body"), target="fr").execute()
+        if (self.current_user["first_name"] == "Austin"):
+            language = "fr"
+        else if (self.current_user["first_name"] == "Tyler"):
+            language = "es"
+        translations = service.translations().list(
+            q=self.get_argument("body"), 
+            target=language,
+        ).execute()
         translatedText = ""
         for translation in translations['translations']:
             translatedText = translation['translatedText']
@@ -139,7 +146,7 @@ class AuthLoginHandler(BaseHandler, tornado.auth.GoogleMixin):
 
 class AuthLogoutHandler(BaseHandler):
     def get(self):
-        self.clear_cookie("chatdemo_user")
+        self.clear_cookie("chat_user")
         self.write("You are now logged out")
 
 
