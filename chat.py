@@ -28,6 +28,8 @@ import json
 from tornado.options import define, options
 from apiclient.discovery import build
 
+REDIS_URL = os.environ['REDISCLOUD_URL']
+
 service = build('translate', 'v2',
                 developerKey='AIzaSyCny1Zg-hDEq3HR6GZrm0BntO_nmU6NBPo')
 define("port", default=8888, help="run on the given port", type=int)
@@ -103,7 +105,7 @@ class MessageUpdatesHandler(BaseHandler):
         )
         for translation in translations['translations']:
             msg['body'] = translation['translatedText']
-        self.write(msg)
+
         self.finish(dict(messages=[msg]))
         self.client.unsubscribe('chat_channel')
         self.client.disconnect()
