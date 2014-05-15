@@ -32,7 +32,7 @@ from apiclient.discovery import build
 service = build('translate', 'v2',
                 developerKey='AIzaSyCny1Zg-hDEq3HR6GZrm0BntO_nmU6NBPo')
 define("port", default=8888, help="run on the given port", type=int)
-if (os.environ.get('REDISCLOUD_URL') == None):
+if (os.environ.get('REDISCLOUD_URL') is None):
     os.environ['REDISCLOUD_URL'] = 'redis://localhost:6379'
 url = urlparse(os.environ['REDISCLOUD_URL'])
 redis_url = os.getenv('REDISTOGO_URL', 'redis://localhost:6379')
