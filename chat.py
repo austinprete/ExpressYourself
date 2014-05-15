@@ -28,12 +28,10 @@ import json
 from tornado.options import define, options
 from apiclient.discovery import build
 
-REDIS_URL = os.environ['REDISCLOUD_URL']
-
 service = build('translate', 'v2',
                 developerKey='AIzaSyCny1Zg-hDEq3HR6GZrm0BntO_nmU6NBPo')
 define("port", default=8888, help="run on the given port", type=int)
-
+redis_url = os.getenv('REDISTOGO_URL', 'redis://localhost:6379')
 
 class Application(tornado.web.Application):
     def __init__(self):
@@ -76,7 +74,7 @@ class MessageNewHandler(BaseHandler):
             "body": self.get_argument("body"),
         }
         message["html"] = self.render_string("message.html", message=message)
-        c = tornadoredis.Client()
+        c = tornadoredis.Client(host=redis_url)
         c.connect()
         text = json.dumps(message)
         c.publish('chat_channel', text)
@@ -99,13 +97,6 @@ class MessageUpdatesHandler(BaseHandler):
         if self.request.connection.stream.closed():
             return
         msg = json.loads(result.body)
-        translations = service.translations().list(
-            q=msg['body'],
-            target='fr',
-        )
-        for translation in translations['translations']:
-            msg['body'] = translation['translatedText']
-
         self.finish(dict(messages=[msg]))
         self.client.unsubscribe('chat_channel')
         self.client.disconnect()
