@@ -90,7 +90,7 @@ class MessageUpdatesHandler(BaseHandler):
     @tornado.web.asynchronous
     def post(self):
         cursor = self.get_argument("cursor", None)
-        self.client = tornadoredis.Client()
+        self.client = tornadoredis.Client(host=url.hostname, port=url.port, password=url.password)
         self.client.connect()
         self.client.subscribe('chat_channel')
         self.client.listen(self.on_message)
