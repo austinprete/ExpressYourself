@@ -24,6 +24,7 @@ import os.path
 import uuid
 import tornadoredis
 import json
+from urlparse import urlparse
 
 from tornado.options import define, options
 from apiclient.discovery import build
@@ -31,6 +32,7 @@ from apiclient.discovery import build
 service = build('translate', 'v2',
                 developerKey='AIzaSyCny1Zg-hDEq3HR6GZrm0BntO_nmU6NBPo')
 define("port", default=8888, help="run on the given port", type=int)
+url = urlparse('redis://localhost:6379')
 redis_url = os.getenv('REDISTOGO_URL', 'redis://localhost:6379')
 
 class Application(tornado.web.Application):
@@ -74,7 +76,7 @@ class MessageNewHandler(BaseHandler):
             "body": self.get_argument("body"),
         }
         message["html"] = self.render_string("message.html", message=message)
-        c = tornadoredis.Client(host=redis_url)
+        c = tornadoredis.Client(host=url.hostname, port=url.port, password=url.password)
         c.connect()
         text = json.dumps(message)
         c.publish('chat_channel', text)
