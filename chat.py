@@ -34,7 +34,7 @@ service = build('translate', 'v2',
 define("port", default=8888, help="run on the given port", type=int)
 if (os.environ.get('REDISCLOUD_URL') is None):
     os.environ['REDISCLOUD_URL'] = 'redis://localhost:6379'
-url = urlparse(os.environ['REDISCLOUD_URL'])
+url = urlparse(os.getenv('REDISCLOUD_URL'))
 redis_url = os.getenv('REDISTOGO_URL', 'redis://localhost:6379')
 
 class Application(tornado.web.Application):
