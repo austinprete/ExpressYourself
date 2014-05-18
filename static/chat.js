@@ -37,13 +37,7 @@ function load() {
 
 function translateCallback(text, callback) {
     var translateValue;
-    var target;
-    if ($("#nav > b").text() == 'Austin Prete') {
-        target = 'sv';
-    }
-    else {
-        target = 'fr';
-    }
+    var target = $("#language option:selected").val();
     gapi.client.load('translate', 'v2', function() {
         var request = gapi.client.request({
               path: '/language/translate/v2',
