@@ -36,7 +36,6 @@ function load() {
 
 
 function translateCallback(text, callback) {
-    var translateValue;
     var target = $("#language option:selected").val();
     gapi.client.load('translate', 'v2', function() {
         var request = gapi.client.request({
@@ -53,7 +52,6 @@ function translateCallback(text, callback) {
             callback(translateValue);
         });
     });
-    return translateValue;
 }
 
 function newMessage(form) {
@@ -155,13 +153,14 @@ var updater = {
         if (existing.length > 0) return;
         var node = $(message.html);
         node.hide();
-        $("#inbox").append(node);
-        var messageContents = $("#m" + message.id + " > .messageContents").text();
-        console.log(messageContents);
-        translateCallback(messageContents, function(translatedValue) {
-            $("#m" + message.id + " > .messageContents").empty().text(translatedValue);
-            node.slideDown();
-        });
+        if (message.body.length > 0) {
+            $("#inbox").append(node);
+            var messageContents = $("#m" + message.id + " > .messageContents").text();
+            translateCallback(messageContents, function(translatedValue) {
+                $("#m" + message.id + " > .messageContents").empty().text(translatedValue);
+                node.slideDown();
+            });
+        }
     }
 
 };
