@@ -108,6 +108,14 @@ jQuery.fn.enable = function(opt_enable) {
     return this;
 };
 
+function htmlDecode(value) {
+    if (value) {
+        return $('<div />').html(value).text();
+    } else {
+        return '';
+    }
+}
+
 var updater = {
     errorSleepTime: 500,
     cursor: null,
@@ -157,7 +165,8 @@ var updater = {
             $("#inbox").append(node);
             var messageContents = $("#m" + message.id + " > .messageContents").text();
             translateCallback(messageContents, function(translatedValue) {
-                $("#m" + message.id + " > .messageContents").empty().text(translatedValue);
+                var escapedValue = htmlDecode(translatedValue);
+                $("#m" + message.id + " > .messageContents").empty().text(escapedValue).html();
                 node.slideDown();
             });
         }
