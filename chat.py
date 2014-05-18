@@ -24,10 +24,13 @@ import uuid
 
 from tornado import gen
 from tornado.options import define, options, parse_command_line
+from apiclient.discovery import build
 
 port = os.environ.get('PORT')
 define("port", default=port, help="run on the given port", type=int)
 
+service = build('translate', 'v2',
+                developerKey='AIzaSyCny1Zg-hDEq3HR6GZrm0BntO_nmU6NBPo')
 
 class MessageBuffer(object):
     def __init__(self):
@@ -77,7 +80,16 @@ class BaseHandler(tornado.web.RequestHandler):
 class MainHandler(BaseHandler):
     @tornado.web.authenticated
     def get(self):
-        self.render("index.html", messages=global_message_buffer.cache)
+        languages = service.languages().list(target = "en").execute()
+        languageList = []
+        for language in languages["languages"]:
+            if (language["name"] != "English"):
+                languageItem = {
+                    "name": language["name"],
+                    "code": language["language"]
+                }
+            languageList.append(languageItem)
+        self.render("index.html", messages=global_message_buffer.cache, languages=languageList)
 
 
 class MessageNewHandler(BaseHandler):
