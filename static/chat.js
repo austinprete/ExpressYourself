@@ -30,6 +30,38 @@ $(document).ready(function() {
     updater.poll();
 });
 
+function load() {
+    gapi.client.setApiKey('AIzaSyCny1Zg-hDEq3HR6GZrm0BntO_nmU6NBPo');
+}
+
+
+function translateCallback(text, callback) {
+    var translateValue;
+    var target;
+    if ($("#nav > b").text() == 'Austin Prete') {
+        target = 'sv';
+    }
+    else {
+        target = 'fr';
+    }
+    gapi.client.load('translate', 'v2', function() {
+        var request = gapi.client.request({
+              path: '/language/translate/v2',
+              method: 'GET',
+              params: { q: text,
+                        target: target }
+            });
+        var x = request.execute(function(response) {
+            console.log(request);
+            console.log(response);
+            translateValue = response.data.translations[0].translatedText;
+            console.log(translateValue);
+            callback(translateValue);
+        });
+    });
+    return translateValue;
+}
+
 function newMessage(form) {
     var message = form.formToDict();
     var disabled = form.find("input[type=submit]");
@@ -130,6 +162,13 @@ var updater = {
         var node = $(message.html);
         node.hide();
         $("#inbox").append(node);
-        node.slideDown();
+        var messageContents = $("#m" + message.id + " > .messageContents").text();
+        console.log(messageContents);
+        translateCallback(messageContents, function(translatedValue) {
+            $("#m" + message.id + " > .messageContents").empty().text(translatedValue);
+            node.slideDown();
+        });
     }
+
 };
+

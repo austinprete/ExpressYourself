@@ -18,45 +18,57 @@ import logging
 import tornado.auth
 import tornado.escape
 import tornado.ioloop
-import tornado.options
 import tornado.web
 import os.path
 import uuid
-import tornadoredis
-import json
-from urlparse import urlparse
 
-from tornado.options import define, options
-from apiclient.discovery import build
+from tornado import gen
+from tornado.options import define, options, parse_command_line
 
-service = build('translate', 'v2',
-                developerKey='AIzaSyCny1Zg-hDEq3HR6GZrm0BntO_nmU6NBPo')
 define("port", default=8888, help="run on the given port", type=int)
-url = urlparse(os.getenv('REDISTOGO_URL', 'redis://localhost:6379'))
 
-class Application(tornado.web.Application):
+
+class MessageBuffer(object):
     def __init__(self):
-        handlers = [
-            (r"/", MainHandler),
-            (r"/auth/login", AuthLoginHandler),
-            (r"/auth/logout", AuthLogoutHandler),
-            (r"/a/message/new", MessageNewHandler),
-            (r"/a/message/updates", MessageUpdatesHandler),
-        ]
-        settings = dict(
-            cookie_secret="43oETzKXQAGaYdkL5gEmGeJJFuYh7EQnp2XdTP1o/Vo=",
-            login_url="/auth/login",
-            template_path=os.path.join(os.path.dirname(__file__), "templates"),
-            static_path=os.path.join(os.path.dirname(__file__), "static"),
-            xsrf_cookies=True,
-            autoescape="xhtml_escape",
-        )
-        tornado.web.Application.__init__(self, handlers, **settings)
+        self.waiters = set()
+        self.cache = []
+        self.cache_size = 200
+
+    def wait_for_messages(self, callback, cursor=None):
+        if cursor:
+            new_count = 0
+            for msg in reversed(self.cache):
+                if msg["id"] == cursor:
+                    break
+                new_count += 1
+            if new_count:
+                callback(self.cache[-new_count:])
+                return
+        self.waiters.add(callback)
+
+    def cancel_wait(self, callback):
+        self.waiters.remove(callback)
+
+    def new_messages(self, messages):
+        logging.info("Sending new message to %r listeners", len(self.waiters))
+        for callback in self.waiters:
+            try:
+                callback(messages)
+            except:
+                logging.error("Error in waiter callback", exc_info=True)
+        self.waiters = set()
+        self.cache.extend(messages)
+        if len(self.cache) > self.cache_size:
+            self.cache = self.cache[-self.cache_size:]
+
+
+# Making this a non-singleton is left as an exercise for the reader.
+global_message_buffer = MessageBuffer()
 
 
 class BaseHandler(tornado.web.RequestHandler):
     def get_current_user(self):
-        user_json = self.get_secure_cookie("user")
+        user_json = self.get_secure_cookie("chat_user")
         if not user_json: return None
         return tornado.escape.json_decode(user_json)
 
@@ -64,7 +76,8 @@ class BaseHandler(tornado.web.RequestHandler):
 class MainHandler(BaseHandler):
     @tornado.web.authenticated
     def get(self):
-        self.render("index.html", messages='')
+        self.render("index.html", messages=global_message_buffer.cache)
+
 
 class MessageNewHandler(BaseHandler):
     @tornado.web.authenticated
@@ -74,12 +87,15 @@ class MessageNewHandler(BaseHandler):
             "from": self.current_user["first_name"],
             "body": self.get_argument("body"),
         }
-        message["html"] = self.render_string("message.html", message=message)
-        c = tornadoredis.Client(host=url.hostname, port=url.port, password=url.password)
-        c.connect()
-        text = json.dumps(message)
-        c.publish('chat_channel', text)
-        self.finish(str(text))
+        # to_basestring is necessary for Python 3's json encoder,
+        # which doesn't accept byte strings.
+        message["html"] = tornado.escape.to_basestring(
+            self.render_string("message.html", message=message))
+        if self.get_argument("next", None):
+            self.redirect(self.get_argument("next"))
+        else:
+            self.write(message)
+        global_message_buffer.new_messages([message])
 
 
 class MessageUpdatesHandler(BaseHandler):
@@ -87,45 +103,53 @@ class MessageUpdatesHandler(BaseHandler):
     @tornado.web.asynchronous
     def post(self):
         cursor = self.get_argument("cursor", None)
-        self.client = tornadoredis.Client(host=url.hostname, port=url.port, password=url.password)
-        self.client.connect()
-        self.client.subscribe('chat_channel')
-        self.client.listen(self.on_message)
+        global_message_buffer.wait_for_messages(self.on_new_messages,
+                                                cursor=cursor)
 
-    @tornado.web.asynchronous
-    def on_message(self, result):
+    def on_new_messages(self, messages):
         # Closed client connection
         if self.request.connection.stream.closed():
             return
-        msg = json.loads(result.body)
-        self.finish(dict(messages=[msg]))
-        self.client.unsubscribe('chat_channel')
-        self.client.disconnect()
+        self.finish(dict(messages=messages))
+
+    def on_connection_close(self):
+        global_message_buffer.cancel_wait(self.on_new_messages)
+
 
 class AuthLoginHandler(BaseHandler, tornado.auth.GoogleMixin):
-    @tornado.web.asynchronous
+    @gen.coroutine
     def get(self):
         if self.get_argument("openid.mode", None):
-            self.get_authenticated_user(self.async_callback(self._on_auth))
+            user = yield self.get_authenticated_user()
+            self.set_secure_cookie("chat_user",
+                                   tornado.escape.json_encode(user))
+            self.redirect("/")
             return
         self.authenticate_redirect(ax_attrs=["name"])
-
-    def _on_auth(self, user):
-        if not user:
-            raise tornado.web.HTTPError(500, "Google auth failed")
-        self.set_secure_cookie("user", tornado.escape.json_encode(user))
-        self.redirect("/")
 
 
 class AuthLogoutHandler(BaseHandler):
     def get(self):
-        self.clear_cookie("user")
+        self.clear_cookie("chat_user")
         self.write("You are now logged out")
 
 
 def main():
-    tornado.options.parse_command_line()
-    app = Application()
+    parse_command_line()
+    app = tornado.web.Application(
+        [
+            (r"/", MainHandler),
+            (r"/auth/login", AuthLoginHandler),
+            (r"/auth/logout", AuthLogoutHandler),
+            (r"/a/message/new", MessageNewHandler),
+            (r"/a/message/updates", MessageUpdatesHandler),
+            ],
+        cookie_secret="__TODO:_GENERATE_YOUR_OWN_RANDOM_VALUE_HERE__",
+        login_url="/auth/login",
+        template_path=os.path.join(os.path.dirname(__file__), "templates"),
+        static_path=os.path.join(os.path.dirname(__file__), "static"),
+        xsrf_cookies=True,
+        )
     app.listen(options.port)
     tornado.ioloop.IOLoop.instance().start()
 
