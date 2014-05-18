@@ -3,7 +3,7 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title>Tornado Chat Demo</title>
+    <title>Translation Chat</title>
     <link rel="stylesheet" href="{{ static_url("chat.css") }}" type="text/css" />
 </head>
 
@@ -32,7 +32,6 @@
             </form>
         </div>
         <select id="language">
-            <option selected value='en'>English</option>
             {% for language in languages %} {% module Template("language.html", language=language) %} {% end %}
         </select>
     </div>

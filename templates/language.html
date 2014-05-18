@@ -1,1 +1,1 @@
-<option value="{{ language["code"] }}">{{ language["name"] }}</option>
+<option {% if (language["name"] == 'English') %}selected{% end %} value="{{ language["code"] }}">{{ language["name"] }}</option>

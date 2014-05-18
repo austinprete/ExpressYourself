@@ -83,11 +83,10 @@ class MainHandler(BaseHandler):
         languages = service.languages().list(target = "en").execute()
         languageList = []
         for language in languages["languages"]:
-            if (language["name"] != "English"):
-                languageItem = {
-                    "name": language["name"],
-                    "code": language["language"]
-                }
+            languageItem = {
+                "name": language["name"],
+                "code": language["language"]
+            }
             languageList.append(languageItem)
         self.render("index.html", messages=global_message_buffer.cache, languages=languageList)
 
