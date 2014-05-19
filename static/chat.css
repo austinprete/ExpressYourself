@@ -15,7 +15,7 @@
  */
 
 body {
-  background: #8be8fc;
+  background: #9bebfc;
   margin: 10px;
 }
 
@@ -36,12 +36,8 @@ td {
   padding: 0;
 }
 
-b {
-  color: #f77825
-}
-
-span {
-  color : #f77825;
+span, b, a {
+  color : #f88c46;
 }
 
 #body {
@@ -64,7 +60,7 @@ span {
 
 #title {
   float: left;
-  color: #f77825;
+  color: #f88c46;
 }
 
 #title1 {
