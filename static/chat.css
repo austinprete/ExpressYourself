@@ -52,5 +52,8 @@ td {
 
 #nav {
   float: right;
-  z-index: 99;
+}
+
+#title {
+  float: left;
 }
