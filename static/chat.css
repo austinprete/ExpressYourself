@@ -15,7 +15,7 @@
  */
 
 body {
-  background: white;
+  background: #8be8fc;
   margin: 10px;
 }
 
@@ -34,6 +34,14 @@ table {
 td {
   border: 0;
   padding: 0;
+}
+
+b {
+  color: #f77825
+}
+
+span {
+  color : #f77825;
 }
 
 #body {
@@ -56,4 +64,17 @@ td {
 
 #title {
   float: left;
+  color: #f77825;
 }
+
+#title1 {
+  font-family:"Comic Sans MS", cursive, sans-serif;
+  float: left;
+}
+
+#title2 {
+  font-family:"Lucida Sans Unicode", "Lucida Grande", sans-serif;
+  font-size:30px;
+  float: right;
+}
+
