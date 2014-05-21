@@ -15,6 +15,7 @@
  */
 
 body {
+  background-color: #f6f6f6;
   margin: 10px;
 }
 
@@ -35,8 +36,12 @@ td {
   padding: 0;
 }
 
-span, b, a {
+span, a {
   color : #f88c46;
+}
+
+b {
+  color: #888;
 }
 
 #body {
@@ -71,5 +76,6 @@ span, b, a {
   font-family:"Lucida Sans Unicode", "Lucida Grande", sans-serif;
   font-size:30px;
   float: right;
+  color: #888;
 }
 
