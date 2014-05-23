@@ -40,7 +40,7 @@ span, a {
   color : #f88c46;
 }
 
-b {
+b, p {
   color: #888;
 }
 
@@ -79,3 +79,6 @@ b {
   color: #888;
 }
 
+#credits {
+  float:right;
+}
