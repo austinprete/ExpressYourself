@@ -151,8 +151,6 @@ def main():
     app = tornado.web.Application(
         [
             (r"/", MainHandler),
-            (r"/1", MainHandler),
-            (r"/2", MainHandler),
             (r"/auth/login", AuthLoginHandler),
             (r"/auth/logout", AuthLogoutHandler),
             (r"/a/message/new", MessageNewHandler),

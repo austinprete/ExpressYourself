@@ -45,10 +45,7 @@ function translateCallback(text, callback) {
                         target: target }
             });
         var x = request.execute(function(response) {
-            console.log(request);
-            console.log(response);
             translateValue = response.data.translations[0].translatedText;
-            console.log(translateValue);
             callback(translateValue);
         });
     });
